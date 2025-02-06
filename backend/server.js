@@ -5,17 +5,18 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT || 5000; // Changed port to 5002
+const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(bodyParser.json());
 
-// MongoDB Atlas connection string from environment variables
-const mongoUri = process.env.MONGODB_URI;
-
-mongoose.connect(mongoUri, {
+// Connect to MongoDB Atlas
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
-});
+  useUnifiedTopology: true,
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch(err => console.error('Failed to connect to MongoDB', err));
 
 const userSchema = new mongoose.Schema({
   name: String,
@@ -28,19 +29,33 @@ const User = mongoose.model('User', userSchema);
 
 app.post('/api/users/login', async (req, res) => {
   const { name, email } = req.body;
+  console.log(`Login request received: ${name}, ${email}`);
   const user = new User({ name, email, loginTime: new Date() });
-  await user.save();
-  res.status(201).send(user);
+  try {
+    await user.save();
+    console.log('User saved:', user);
+    res.status(201).send(user);
+  } catch (err) {
+    console.error('Error saving user', err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 app.post('/api/users/logout', async (req, res) => {
   const { email } = req.body;
-  const user = await User.findOneAndUpdate(
-    { email },
-    { logoutTime: new Date() },
-    { new: true }
-  );
-  res.status(200).send(user);
+  console.log(`Logout request received: ${email}`);
+  try {
+    const user = await User.findOneAndUpdate(
+      { email },
+      { logoutTime: new Date() },
+      { new: true }
+    );
+    console.log('User updated:', user);
+    res.status(200).send(user);
+  } catch (err) {
+    console.error('Error updating user', err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 app.listen(port, () => {
