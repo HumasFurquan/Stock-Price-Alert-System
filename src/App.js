@@ -10,249 +10,6 @@ const stockSuggestions = [
   { name: "GOOGL" },
   { name: "MSFT" },
   { name: "AMZN" },
-  { name: "TSLA" },
-  { name: "FB" },
-  { name: "NFLX" },
-  { name: "NVDA" },
-  { name: "BABA" },
-  { name: "V" },
-  { name: "JPM" },
-  { name: "JNJ" },
-  { name: "WMT" },
-  { name: "PG" },
-  { name: "DIS" },
-  { name: "MA" },
-  { name: "HD" },
-  { name: "PYPL" },
-  { name: "BAC" },
-  { name: "INTC" },
-  { name: "CMCSA" },
-  { name: "ADBE" },
-  { name: "PFE" },
-  { name: "KO" },
-  { name: "PEP" },
-  { name: "CSCO" },
-  { name: "XOM" },
-  { name: "T" },
-  { name: "VZ" },
-  { name: "ABT" },
-  { name: "MRK" },
-  { name: "NKE" },
-  { name: "ORCL" },
-  { name: "CRM" },
-  { name: "MCD" },
-  { name: "COST" },
-  { name: "WFC" },
-  { name: "MDT" },
-  { name: "AMGN" },
-  { name: "UNH" },
-  { name: "TXN" },
-  { name: "QCOM" },
-  { name: "LLY" },
-  { name: "HON" },
-  { name: "IBM" },
-  { name: "MMM" },
-  { name: "GE" },
-  { name: "BA" },
-  { name: "CAT" },
-  { name: "UPS" },
-  { name: "FDX" },
-  { name: "LMT" },
-  { name: "GS" },
-  { name: "MS" },
-  { name: "BLK" },
-  { name: "AXP" },
-  { name: "SPGI" },
-  { name: "PLD" },
-  { name: "CB" },
-  { name: "SCHW" },
-  { name: "USB" },
-  { name: "PNC" },
-  { name: "TGT" },
-  { name: "LOW" },
-  { name: "BKNG" },
-  { name: "ADP" },
-  { name: "SYK" },
-  { name: "ISRG" },
-  { name: "CI" },
-  { name: "ANTM" },
-  { name: "CNC" },
-  { name: "HUM" },
-  { name: "CVS" },
-  { name: "UNP" },
-  { name: "CSX" },
-  { name: "NSC" },
-  { name: "KSU" },
-  { name: "EXC" },
-  { name: "DUK" },
-  { name: "SO" },
-  { name: "NEE" },
-  { name: "D" },
-  { name: "AEP" },
-  { name: "SRE" },
-  { name: "PEG" },
-  { name: "ED" },
-  { name: "XEL" },
-  { name: "ES" },
-  { name: "EIX" },
-  { name: "PCG" },
-  { name: "AEE" },
-  { name: "CMS" },
-  { name: "DTE" },
-  { name: "ETR" },
-  { name: "FE" },
-  { name: "PPL" },
-  { name: "WEC" },
-  { name: "AWK" },
-  { name: "CNP" },
-  { name: "NI" },
-  { name: "NRG" },
-  { name: "AES" },
-  { name: "LNT" },
-  { name: "EVRG" },
-  { name: "PNW" },
-  { name: "AEP" },
-  { name: "ATO" },
-  { name: "OGE" },
-  { name: "SWX" },
-  { name: "UGI" },
-  { name: "SJI" },
-  { name: "NJR" },
-  { name: "NWN" },
-  { name: "AVA" },
-  { name: "CWT" },
-  { name: "AWR" },
-  { name: "SJW" },
-  { name: "YORW" },
-  { name: "MSEX" },
-  { name: "ARTNA" },
-  { name: "CTWS" },
-  { name: "CWCO" },
-  { name: "WTRG" },
-  { name: "AQUA" },
-  { name: "XYL" },
-  { name: "BMI" },
-  { name: "DHR" },
-  { name: "TMO" },
-  { name: "BDX" },
-  { name: "PKI" },
-  { name: "WAT" },
-  { name: "MTD" },
-  { name: "A" },
-  { name: "BIO" },
-  { name: "TECH" },
-  { name: "ILMN" },
-  { name: "IQV" },
-  { name: "LH" },
-  { name: "DGX" },
-  { name: "NEOG" },
-  { name: "CRL" },
-  { name: "PRGO" },
-  { name: "PDCO" },
-  { name: "HSIC" },
-  { name: "XRAY" },
-  { name: "ALGN" },
-  { name: "STE" },
-  { name: "ZBH" },
-  { name: "SYK" },
-  { name: "JNJ" },
-  { name: "ABT" },
-  { name: "MDT" },
-  { name: "BSX" },
-  { name: "EW" },
-  { name: "HOLX" },
-  { name: "VAR" },
-  { name: "ISRG" },
-  { name: "RMD" },
-  { name: "GMED" },
-  { name: "NUVA" },
-  { name: "IART" },
-  { name: "OFIX" },
-  { name: "PODD" },
-  { name: "TNDM" },
-  { name: "DXCM" },
-  { name: "MASI" },
-  { name: "INSP" },
-  { name: "NVCR" },
-  { name: "PEN" },
-  { name: "SILK" },
-  { name: "AXNX" },
-  { name: "CUTR" },
-  { name: "IRTC" },
-  { name: "LVGO" },
-  { name: "NTRA" },
-  { name: "GH" },
-  { name: "EXAS" },
-  { name: "FLGT" },
-  { name: "CDNA" },
-  { name: "NARI" },
-  { name: "TXG" },
-  { name: "TWST" },
-  { name: "FATE" },
-  { name: "EDIT" },
-  { name: "CRSP" },
-  { name: "NTLA" },
-  { name: "BEAM" },
-  { name: "SGMO" },
-  { name: "BLUE" },
-  { name: "CLLS" },
-  { name: "ADPT" },
-  { name: "GILD" },
-  { name: "VRTX" },
-  { name: "REGN" },
-  { name: "BIIB" },
-  { name: "AMGN" },
-  { name: "INCY" },
-  { name: "ALXN" },
-  { name: "NBIX" },
-  { name: "SAGE" },
-  { name: "ACAD" },
-  { name: "IONS" },
-  { name: "SRPT" },
-  { name: "VRTX" },
-  { name: "BMRN" },
-  { name: "ALNY" },
-  { name: "ARWR" },
-  { name: "MRTX" },
-  { name: "EXEL" },
-  { name: "KRTX" },
-  { name: "IMMU" },
-  { name: "GBT" },
-  { name: "RARE" },
-  { name: "PTCT" },
-  { name: "FOLD" },
-  { name: "CRSP" },
-  { name: "EDIT" },
-  { name: "NTLA" },
-  { name: "BEAM" },
-  { name: "SGMO" },
-  { name: "BLUE" },
-  { name: "CLLS" },
-  { name: "ADPT" },
-  { name: "GILD" },
-  { name: "VRTX" },
-  { name: "REGN" },
-  { name: "BIIB" },
-  { name: "AMGN" },
-  { name: "INCY" },
-  { name: "ALXN" },
-  { name: "NBIX" },
-  { name: "SAGE" },
-  { name: "ACAD" },
-  { name: "IONS" },
-  { name: "SRPT" },
-  { name: "VRTX" },
-  { name: "BMRN" },
-  { name: "ALNY" },
-  { name: "ARWR" },
-  { name: "MRTX" },
-  { name: "EXEL" },
-  { name: "KRTX" },
-  { name: "IMMU" },
-  { name: "GBT" },
-  { name: "RARE" },
-  { name: "PTCT" },
-  { name: "FOLD" },
 ];
 
 const USD_TO_INR_CONVERSION_RATE = 75;
@@ -272,6 +29,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
+  const [inputValues, setInputValues] = useState({});
+  const [showDuplicateMessage, setShowDuplicateMessage] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -321,6 +80,13 @@ function App() {
       return;
     }
 
+    // Check if the stock is already present
+    if (stockPrices.some(stock => stock.name === stockName)) {
+      setShowDuplicateMessage(true);
+      setTimeout(() => setShowDuplicateMessage(false), 2000); // Hide message after 2 seconds
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -360,7 +126,10 @@ function App() {
   const getSuggestionValue = (suggestion) => suggestion.name;
 
   const renderSuggestion = (suggestion) => (
-    <div>
+    <div
+      style={{ cursor: 'pointer' }}
+      onMouseEnter={() => setStockName(suggestion.name.toUpperCase())}
+    >
       {suggestion.name}
     </div>
   );
@@ -374,7 +143,11 @@ function App() {
   };
 
   const onChange = (event, { newValue }) => {
-    setStockName(newValue);
+    setStockName(newValue.toUpperCase());
+  };
+
+  const onSuggestionSelected = (event, { suggestion }) => {
+    setStockName(suggestion.name.toUpperCase());
   };
 
   const inputProps = {
@@ -386,6 +159,32 @@ function App() {
         fetchStockPrice();
       }
     }
+  };
+
+  const handleTrigger = (stock) => {
+    console.log(`Trigger alert for ${stock.name} at price ${stock.price}`);
+    // Add your trigger alert logic here
+  };
+
+  const handleCurrencyChange = (stock, currency) => {
+    setInputValues((prevValues) => ({
+      ...prevValues,
+      [stock.name]: { ...prevValues[stock.name], currency, showInput: true }
+    }));
+  };
+
+  const handleInputChange = (stock, event) => {
+    const value = event.target.value;
+    if (!isNaN(value)) {
+      setInputValues((prevValues) => ({
+        ...prevValues,
+        [stock.name]: { ...prevValues[stock.name], value }
+      }));
+    }
+  };
+
+  const handleDelete = (stockToDelete) => {
+    setStockPrices((prevStockPrices) => prevStockPrices.filter(stock => stock.name !== stockToDelete.name));
   };
 
   if (isLoading) {
@@ -409,14 +208,36 @@ function App() {
                   getSuggestionValue={getSuggestionValue}
                   renderSuggestion={renderSuggestion}
                   inputProps={inputProps}
+                  onSuggestionSelected={onSuggestionSelected}
                 />
                 <button onClick={fetchStockPrice}>Show</button>
+                {showDuplicateMessage && <p className="duplicate-message">This Stock already added</p>}
                 {loading && <p>Loading...</p>}
                 {error && <p>Error: {error}</p>}
                 <ul className="stock-price-list" reversed>
                   {stockPrices.map((stock, index) => (
                     <li key={index}>
                       {index + 1}. Current price of {stock.name}: ${stock.price} USD / ₹{(stock.price * USD_TO_INR_CONVERSION_RATE).toFixed(2)} INR
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <button onClick={() => handleCurrencyChange(stock, 'USD')} style={{ marginLeft: '10px' }}>Dollar</button>
+                          <button onClick={() => handleCurrencyChange(stock, 'INR')} style={{ marginLeft: '10px' }}>Rupees</button>
+                        </div>
+                        <button onClick={() => handleDelete(stock)} style={{ marginLeft: '10px' }}>Delete</button>
+                      </div>
+                      {inputValues[stock.name]?.showInput && (
+                        <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                          <input
+                            type="text"
+                            placeholder={`Enter amount in ${inputValues[stock.name].currency}`}
+                            value={inputValues[stock.name].value || ''}
+                            onChange={(event) => handleInputChange(stock, event)}
+                            style={{ textAlign: 'center' }}
+                          />
+                        </div>
+                      )}
+                      {inputValues[stock.name]?.value && <span style={{ marginLeft: '10px' }}>{inputValues[stock.name].value} {inputValues[stock.name].currency}</span>}
+                      <button onClick={() => handleTrigger(stock)} style={{ marginLeft: '10px' }}>Trigger</button>
                     </li>
                   ))}
                 </ul>

@@ -99,3 +99,9 @@ li {
   align-self: center;
   margin-top: 20px;
 }
+
+.duplicate-message {
+  color: red;
+  font-size: 1.2em;
+  margin-top: 10px;
+}
