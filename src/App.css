@@ -1,16 +1,22 @@
 body, html {
   height: 100%;
   margin: 0;
+  font-family: Arial, sans-serif;
+  background: url('./assets/StockMarketBacground\ Image.png') no-repeat center center fixed;
+  background-size: cover;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: Arial, sans-serif;
-  background-color: #f0f2f5;
+}
+
+body.dark-mode, html.dark-mode {
+  background-color: #121212;
+  color: #ffffff;
 }
 
 .App {
   text-align: center;
-  background: white;
+  background: rgba(255, 255, 255, 0.8); /* Translucent background */
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -20,10 +26,19 @@ body, html {
   height: auto; /* Adjust height as needed */
 }
 
+.App.dark-mode {
+  background: rgba(30, 30, 30, 0.8); /* Translucent background for dark mode */
+  color: #ffffff;
+}
+
 h1 {
   color: #333;
   font-size: 2.5em;
   margin-bottom: 20px;
+}
+
+.App.dark-mode h1 {
+  color: #ffffff;
 }
 
 button {
@@ -38,6 +53,15 @@ button {
 
 button:hover {
   background-color: #ddd;
+}
+
+button.dark-mode {
+  background-color: #333;
+  color: #ffffff;
+}
+
+button.dark-mode:hover {
+  background-color: #555;
 }
 
 button:first-of-type {

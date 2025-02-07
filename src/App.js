@@ -31,6 +31,7 @@ function App() {
   const [suggestions, setSuggestions] = useState([]);
   const [inputValues, setInputValues] = useState({});
   const [showDuplicateMessage, setShowDuplicateMessage] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -187,12 +188,21 @@ function App() {
     setStockPrices((prevStockPrices) => prevStockPrices.filter(stock => stock.name !== stockToDelete.name));
   };
 
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    document.body.classList.toggle('dark-mode');
+    document.documentElement.classList.toggle('dark-mode');
+  };
+
   if (isLoading) {
     return <div className="loading">Loading...</div>;
   }
 
   return (
-    <div className="App">
+    <div className={`App ${darkMode ? 'dark-mode' : ''}`}>
+      <button onClick={toggleDarkMode} style={{ position: 'absolute', top: '10px', right: '10px' }}>
+        {darkMode ? 'Light Mode' : 'Dark Mode'}
+      </button>
       <h1>Welcome to Stock Price Trigger Alert</h1>
       <Routes>
         <Route path="/guest" element={<GuestPage />} />
