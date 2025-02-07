@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import './App.css';
-import GuestPage from './components/GuestPages'; // Updated import statement
+import GuestPage from './components/GuestPages';
 import Autosuggest from 'react-autosuggest';
 
 const stockSuggestions = [
@@ -32,11 +32,13 @@ function App() {
   const [inputValues, setInputValues] = useState({});
   const [showDuplicateMessage, setShowDuplicateMessage] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [showAlertPopup, setShowAlertPopup] = useState(false);
+  const [alertPopupMessage, setAlertPopupMessage] = useState("");
 
   useEffect(() => {
     if (isAuthenticated && user) {
       console.log(`Sending request to save user login: ${user.name}, ${user.email}`);
-      fetch('http://localhost:5002/api/users/login', { // Updated port to 5002
+      fetch('http://localhost:5002/api/users/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +54,7 @@ function App() {
   const handleLogout = () => {
     if (user) {
       console.log(`Sending request to save user logout: ${user.email}`);
-      fetch('http://localhost:5002/api/users/logout', { // Updated port to 5002
+      fetch('http://localhost:5002/api/users/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -163,8 +165,25 @@ function App() {
   };
 
   const handleTrigger = (stock) => {
-    console.log(`Trigger alert for ${stock.name} at price ${stock.price}`);
-    // Add your trigger alert logic here
+    const inputValue = inputValues[stock.name]?.value;
+    const currency = inputValues[stock.name]?.currency;
+
+    if (inputValue && currency) {
+      const message = currency === 'USD'
+        ? `You will be alerted at ${inputValue} dollars.`
+        : `You will be alerted at ${inputValue} rupees.`;
+      setAlertPopupMessage(message);
+      setShowAlertPopup(true);
+      setTimeout(() => {
+        setShowAlertPopup(false);
+      }, 4000); // Clear message after 4 seconds
+    } else {
+      setAlertPopupMessage('Please enter a valid amount.');
+      setShowAlertPopup(true);
+      setTimeout(() => {
+        setShowAlertPopup(false);
+      }, 4000); // Clear message after 4 seconds
+    }
   };
 
   const handleCurrencyChange = (stock, currency) => {
@@ -226,7 +245,7 @@ function App() {
                 {error && <p>Error: {error}</p>}
                 <ul className="stock-price-list" reversed>
                   {stockPrices.map((stock, index) => (
-                    <li key={index}>
+                    <li key={index} className="stock-item">
                       {index + 1}. Current price of {stock.name}: ${stock.price} USD / ₹{(stock.price * USD_TO_INR_CONVERSION_RATE).toFixed(2)} INR
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
@@ -246,15 +265,20 @@ function App() {
                           />
                         </div>
                       )}
-                      {inputValues[stock.name]?.value && <span style={{ marginLeft: '10px' }}>{inputValues[stock.name].value} {inputValues[stock.name].currency}</span>}
-                      <button onClick={() => handleTrigger(stock)} style={{ marginLeft: '10px' }}>Trigger</button>
+                      {inputValues[stock.name]?.showInput && (
+                        <div className="trigger-button-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '10px' }}>
+                          <button onClick={() => handleTrigger(stock)}>Trigger</button>
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
               </div>
-              <button className="logout-button" onClick={handleLogout}>
-                Log out
-              </button>
+              <div className="footer">
+                <button className="logout-button" onClick={handleLogout}>
+                  Log out
+                </button>
+              </div>
             </>
           ) : (
             <div>
@@ -264,6 +288,12 @@ function App() {
           )
         } />
       </Routes>
+      {showAlertPopup && (
+        <div className="alert-popup">
+          <p>{alertPopupMessage}</p>
+          <div className="alert-popup-line"></div>
+        </div>
+      )}
     </div>
   );
 }
