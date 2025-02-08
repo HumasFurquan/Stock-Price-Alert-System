@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import './App.css';
 import GuestPage from './components/GuestPages';
 import Autosuggest from 'react-autosuggest';
@@ -23,7 +23,6 @@ function App() {
     isLoading,
   } = useAuth0();
 
-  const navigate = useNavigate();
   const [stockName, setStockName] = useState("");
   const [stockPrices, setStockPrices] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -35,27 +34,67 @@ function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [showAlertPopup, setShowAlertPopup] = useState(false);
   const [alertPopupMessage, setAlertPopupMessage] = useState("");
+  const [triggeredStocks, setTriggeredStocks] = useState({});
+  const [guestUser, setGuestUser] = useState(false);
+  const [showLoginButton, setShowLoginButton] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      console.log(`Sending request to save user login: ${user.name}, ${user.email}`);
-      fetch('http://localhost:5002/api/users/login', {
+      fetch(`http://localhost:5000/api/users/${user.email}`)
+        .then(response => response.json())
+        .then(async data => {
+          if (data && data.stocks) {
+            const updatedStocks = await Promise.all(data.stocks.map(async stock => {
+              const response = await fetch(`https://api.twelvedata.com/price?symbol=${stock.name}&apikey=996517017fc341dc84037d571b92f61f`);
+              const stockData = await response.json();
+              return {
+                ...stock,
+                price: stockData.price
+              };
+            }));
+            setStockPrices(updatedStocks);
+            const inputValues = {};
+            const triggeredStocks = {};
+            updatedStocks.forEach(stock => {
+              inputValues[stock.name] = {
+                value: stock.triggeredPrice,
+                currency: 'USD', // Assuming default currency is USD
+                showInput: false,
+              };
+              triggeredStocks[stock.name] = true;
+            });
+            setInputValues(inputValues);
+            setTriggeredStocks(triggeredStocks);
+          }
+        })
+        .catch(error => console.error('Error fetching user data:', error));
+    }
+  }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const stocks = stockPrices.map(stock => ({
+        name: stock.name,
+        currentPrice: stock.price,
+        triggeredPrice: inputValues[stock.name]?.value || 0,
+      }));
+
+      fetch('http://localhost:5000/api/users/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: user.name, email: user.email }),
+        body: JSON.stringify({ name: user.name, email: user.email, stocks }),
       })
       .then(response => response.json())
       .then(data => console.log('User login saved:', data))
       .catch(error => console.error('Error:', error));
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, stockPrices, inputValues]);
 
   const handleLogout = () => {
     if (user) {
-      console.log(`Sending request to save user logout: ${user.email}`);
-      fetch('http://localhost:5002/api/users/logout', {
+      fetch('http://localhost:5000/api/users/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +110,7 @@ function App() {
 
   const handleGuestLogin = () => {
     console.log('Guest user logged in');
-    navigate('/guest?mode=guest');
+    setGuestUser(true);
   };
 
   const handleLogin = () => {
@@ -167,6 +206,16 @@ function App() {
   };
 
   const handleTrigger = (stock) => {
+    if (guestUser) {
+      setAlertPopupMessage('Email required');
+      setShowAlertPopup(true);
+      setTimeout(() => {
+        setShowAlertPopup(false);
+        setShowLoginButton(true);
+      }, 4000); // Clear message after 4 seconds
+      return;
+    }
+
     const inputValue = inputValues[stock.name]?.value;
     const currency = inputValues[stock.name]?.currency;
 
@@ -179,6 +228,12 @@ function App() {
       setTimeout(() => {
         setShowAlertPopup(false);
       }, 4000); // Clear message after 4 seconds
+
+      // Mark the stock as triggered
+      setTriggeredStocks((prev) => ({
+        ...prev,
+        [stock.name]: true,
+      }));
     } else {
       setAlertPopupMessage('Please enter a valid amount.');
       setShowAlertPopup(true);
@@ -186,6 +241,14 @@ function App() {
         setShowAlertPopup(false);
       }, 4000); // Clear message after 4 seconds
     }
+  };
+
+  const handleEdit = (stock) => {
+    // Mark the stock as not triggered to show the input box and trigger button again
+    setTriggeredStocks((prev) => ({
+      ...prev,
+      [stock.name]: false,
+    }));
   };
 
   const handleCurrencyChange = (stock, currency) => {
@@ -207,6 +270,11 @@ function App() {
 
   const handleDelete = (stockToDelete) => {
     setStockPrices((prevStockPrices) => prevStockPrices.filter(stock => stock.name !== stockToDelete.name));
+    setTriggeredStocks((prev) => {
+      const newState = { ...prev };
+      delete newState[stockToDelete.name];
+      return newState;
+    });
   };
 
   const toggleDarkMode = () => {
@@ -228,9 +296,9 @@ function App() {
       <Routes>
         <Route path="/guest" element={<GuestPage />} />
         <Route path="/" element={
-          isAuthenticated ? (
+          isAuthenticated || guestUser ? (
             <>
-              <h2>Hello, {user.name}!</h2>
+              <h2>Hello, {guestUser ? 'Guest User' : user.name}!</h2>
               <div className="stock-search-container">
                 <Autosuggest
                   suggestions={suggestions}
@@ -254,9 +322,16 @@ function App() {
                           <button onClick={() => handleCurrencyChange(stock, 'USD')} style={{ marginLeft: '10px' }}>Dollar</button>
                           <button className="rupees-button" onClick={() => handleCurrencyChange(stock, 'INR')} style={{ marginLeft: '10px' }}>Rupees</button>
                         </div>
-                        <button className="delete-button" onClick={() => handleDelete(stock)} style={{ marginLeft: '10px' }}>Delete</button>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                          <button className="delete-button" onClick={() => handleDelete(stock)} style={{ marginLeft: '10px' }}>Delete</button>
+                          {triggeredStocks[stock.name] && (
+                            <button className="edit-button" onClick={() => handleEdit(stock)} style={{ marginLeft: '10px', marginTop: '5px' }}>
+                              Edit
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      {inputValues[stock.name]?.showInput && (
+                      {inputValues[stock.name]?.showInput && !triggeredStocks[stock.name] && (
                         <div style={{ marginTop: '10px', textAlign: 'center' }}>
                           <input
                             type="text"
@@ -267,9 +342,20 @@ function App() {
                           />
                         </div>
                       )}
-                      {inputValues[stock.name]?.showInput && (
+                      {triggeredStocks[stock.name] && (
+                        <div className="alert-message">
+                          <p>You have set alert at {inputValues[stock.name].value} {inputValues[stock.name].currency}</p>
+                        </div>
+                      )}
+                      {!triggeredStocks[stock.name] && inputValues[stock.name]?.showInput && (
                         <div className="trigger-button-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '10px' }}>
-                          <button onClick={() => handleTrigger(stock)}>Trigger</button>
+                          {showLoginButton && guestUser ? (
+                            <button onClick={handleLogin} style={{ marginBottom: '10px' }}>Log in</button>
+                          ) : (
+                            <button onClick={() => handleTrigger(stock)}>
+                              Trigger
+                            </button>
+                          )}
                         </div>
                       )}
                     </li>

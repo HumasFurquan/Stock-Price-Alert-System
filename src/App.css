@@ -215,3 +215,10 @@ li {
     width: 0;
   }
 }
+
+.alert-message {
+  font-size: 1.3em; /* Increased font size */
+  color: #333;
+  text-align: center;
+  margin-top: 10px;
+}

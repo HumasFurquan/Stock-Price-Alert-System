@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const moment = require('moment');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -21,18 +22,30 @@ mongoose.connect(process.env.MONGODB_URI, {
 const userSchema = new mongoose.Schema({
   name: String,
   email: String,
-  loginTime: Date,
-  logoutTime: Date,
+  loginTime: String,
+  logoutTime: String,
+  stocks: [
+    {
+      name: String,
+      currentPrice: Number,
+      triggeredPrice: Number,
+    },
+  ],
 });
 
 const User = mongoose.model('User', userSchema);
 
 app.post('/api/users/login', async (req, res) => {
-  const { name, email } = req.body;
-  console.log(`Login request received: ${name}, ${email}`);
-  const user = new User({ name, email, loginTime: new Date() });
+  const { name, email, stocks } = req.body;
+  const loginTime = moment().format('DD-MM-YYYY hh:mm A');
+  console.log(`Login request received: ${name}, ${email}, ${stocks}, ${loginTime}`);
+  
   try {
-    await user.save();
+    const user = await User.findOneAndUpdate(
+      { email },
+      { name, loginTime, stocks },
+      { new: true, upsert: true }
+    );
     console.log('User saved:', user);
     res.status(201).send(user);
   } catch (err) {
@@ -43,17 +56,34 @@ app.post('/api/users/login', async (req, res) => {
 
 app.post('/api/users/logout', async (req, res) => {
   const { email } = req.body;
-  console.log(`Logout request received: ${email}`);
+  const logoutTime = moment().format('DD-MM-YYYY hh:mm A');
+  console.log(`Logout request received: ${email}, ${logoutTime}`);
+  
   try {
     const user = await User.findOneAndUpdate(
       { email },
-      { logoutTime: new Date() },
+      { logoutTime },
       { new: true }
     );
     console.log('User updated:', user);
     res.status(200).send(user);
   } catch (err) {
     console.error('Error updating user', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/api/users/:email', async (req, res) => {
+  const { email } = req.params;
+  try {
+    const user = await User.findOne({ email });
+    if (user) {
+      res.status(200).send(user);
+    } else {
+      res.status(404).send('User not found');
+    }
+  } catch (err) {
+    console.error('Error fetching user', err);
     res.status(500).send('Internal Server Error');
   }
 });
