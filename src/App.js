@@ -31,6 +31,7 @@ function App() {
   const [suggestions, setSuggestions] = useState([]);
   const [inputValues, setInputValues] = useState({});
   const [showDuplicateMessage, setShowDuplicateMessage] = useState(false);
+  const [duplicateMessage, setDuplicateMessage] = useState("");
   const [darkMode, setDarkMode] = useState(false);
   const [showAlertPopup, setShowAlertPopup] = useState(false);
   const [alertPopupMessage, setAlertPopupMessage] = useState("");
@@ -85,6 +86,7 @@ function App() {
 
     // Check if the stock is already present
     if (stockPrices.some(stock => stock.name === stockName)) {
+      setDuplicateMessage(`${stockName} Stock already added`);
       setShowDuplicateMessage(true);
       setTimeout(() => setShowDuplicateMessage(false), 2000); // Hide message after 2 seconds
       return;
@@ -240,7 +242,7 @@ function App() {
                   onSuggestionSelected={onSuggestionSelected}
                 />
                 <button onClick={fetchStockPrice}>Show</button>
-                {showDuplicateMessage && <p className="duplicate-message">This Stock already added</p>}
+                {showDuplicateMessage && <p className="duplicate-message">{duplicateMessage}</p>}
                 {loading && <p>Loading...</p>}
                 {error && <p>Error: {error}</p>}
                 <ul className="stock-price-list" reversed>
@@ -250,9 +252,9 @@ function App() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                           <button onClick={() => handleCurrencyChange(stock, 'USD')} style={{ marginLeft: '10px' }}>Dollar</button>
-                          <button onClick={() => handleCurrencyChange(stock, 'INR')} style={{ marginLeft: '10px' }}>Rupees</button>
+                          <button className="rupees-button" onClick={() => handleCurrencyChange(stock, 'INR')} style={{ marginLeft: '10px' }}>Rupees</button>
                         </div>
-                        <button onClick={() => handleDelete(stock)} style={{ marginLeft: '10px' }}>Delete</button>
+                        <button className="delete-button" onClick={() => handleDelete(stock)} style={{ marginLeft: '10px' }}>Delete</button>
                       </div>
                       {inputValues[stock.name]?.showInput && (
                         <div style={{ marginTop: '10px', textAlign: 'center' }}>
