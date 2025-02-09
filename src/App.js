@@ -36,7 +36,6 @@ function App() {
   const [alertPopupMessage, setAlertPopupMessage] = useState("");
   const [triggeredStocks, setTriggeredStocks] = useState({});
   const [guestUser, setGuestUser] = useState(false);
-  const [showLoginButton, setShowLoginButton] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -211,14 +210,13 @@ function App() {
       setShowAlertPopup(true);
       setTimeout(() => {
         setShowAlertPopup(false);
-        setShowLoginButton(true);
       }, 4000); // Clear message after 4 seconds
       return;
     }
-
+  
     const inputValue = inputValues[stock.name]?.value;
     const currency = inputValues[stock.name]?.currency;
-
+  
     if (inputValue && currency) {
       const message = currency === 'USD'
         ? `You will be alerted at ${inputValue} dollars.`
@@ -228,12 +226,44 @@ function App() {
       setTimeout(() => {
         setShowAlertPopup(false);
       }, 4000); // Clear message after 4 seconds
-
+  
       // Mark the stock as triggered
       setTriggeredStocks((prev) => ({
         ...prev,
         [stock.name]: true,
       }));
+  
+      // Save the triggered price to MongoDB
+      const updatedStocks = stockPrices.map(s => 
+        s.name === stock.name ? { ...s, triggeredPrice: inputValue } : s
+      );
+  
+      fetch('http://localhost:5000/api/users/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: user.email, stocks: updatedStocks }),
+      })
+      .then(response => response.json())
+      .then(data => console.log('Triggered price saved:', data))
+      .catch(error => console.error('Error:', error));
+  
+      // Send email using SendGrid
+      fetch('http://localhost:5000/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: user.email,
+          subject: 'Stock Price Alert',
+          text: `You will be alerted at ${inputValue} ${currency} for stock ${stock.name}.`
+        }),
+      })
+      .then(response => response.json())
+      .then(data => console.log('Email sent:', data))
+      .catch(error => console.error('Error sending email:', error));
     } else {
       setAlertPopupMessage('Please enter a valid amount.');
       setShowAlertPopup(true);
@@ -248,6 +278,10 @@ function App() {
     setTriggeredStocks((prev) => ({
       ...prev,
       [stock.name]: false,
+    }));
+    setInputValues((prevValues) => ({
+      ...prevValues,
+      [stock.name]: { ...prevValues[stock.name], showInput: true }
     }));
   };
 
@@ -331,7 +365,7 @@ function App() {
                           )}
                         </div>
                       </div>
-                      {inputValues[stock.name]?.showInput && !triggeredStocks[stock.name] && (
+                      {inputValues[stock.name]?.showInput && (
                         <div style={{ marginTop: '10px', textAlign: 'center' }}>
                           <input
                             type="text"
@@ -340,22 +374,16 @@ function App() {
                             onChange={(event) => handleInputChange(stock, event)}
                             style={{ textAlign: 'center' }}
                           />
+                          <div className="trigger-button-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '10px' }}>
+                            <button onClick={() => handleTrigger(stock)}>
+                              Trigger
+                            </button>
+                          </div>
                         </div>
                       )}
                       {triggeredStocks[stock.name] && (
                         <div className="alert-message">
                           <p>You have set alert at {inputValues[stock.name].value} {inputValues[stock.name].currency}</p>
-                        </div>
-                      )}
-                      {!triggeredStocks[stock.name] && inputValues[stock.name]?.showInput && (
-                        <div className="trigger-button-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '10px' }}>
-                          {showLoginButton && guestUser ? (
-                            <button onClick={handleLogin} style={{ marginBottom: '10px' }}>Log in</button>
-                          ) : (
-                            <button onClick={() => handleTrigger(stock)}>
-                              Trigger
-                            </button>
-                          )}
                         </div>
                       )}
                     </li>

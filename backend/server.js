@@ -4,12 +4,16 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const moment = require('moment');
+const sgMail = require('@sendgrid/mail');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(bodyParser.json());
+
+// Set SendGrid API key
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Connect to MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI, {
@@ -84,6 +88,41 @@ app.get('/api/users/:email', async (req, res) => {
     }
   } catch (err) {
     console.error('Error fetching user', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.post('/api/users/update', async (req, res) => {
+  const { email, stocks } = req.body;
+  try {
+    const user = await User.findOneAndUpdate(
+      { email },
+      { stocks },
+      { new: true }
+    );
+    console.log('User stocks updated:', user);
+    res.status(200).send(user);
+  } catch (err) {
+    console.error('Error updating user stocks', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.post('/api/send-email', async (req, res) => {
+  const { to, subject, text } = req.body;
+  const msg = {
+    to,
+    from: 'humasfurquan2025@gmail.com', // Use your verified sender email
+    subject,
+    text,
+  };
+
+  try {
+    await sgMail.send(msg);
+    console.log('Email sent');
+    res.status(200).send('Email sent');
+  } catch (error) {
+    console.error('Error sending email:', error);
     res.status(500).send('Internal Server Error');
   }
 });
