@@ -228,12 +228,23 @@ function App() {
       setShowAlertPopup(true);
       setTimeout(() => {
         setShowAlertPopup(false);
+        setTimeout(() => {
+          setAlertPopupMessage('Get alert on Phone by clicking on Get Alert on Phone Number');
+          setShowAlertPopup(true);
+          setTimeout(() => {
+            setShowAlertPopup(false);
+          }, 4000); // Clear message after 4 seconds
+        }, 2000); // Show second popup after 2 seconds
       }, 4000); // Clear message after 4 seconds
   
-      // Mark the stock as triggered
+      // Mark the stock as triggered and hide the input and trigger button
       setTriggeredStocks((prev) => ({
         ...prev,
         [stock.name]: true,
+      }));
+      setInputValues((prevValues) => ({
+        ...prevValues,
+        [stock.name]: { ...prevValues[stock.name], showInput: false }
       }));
   
       // Save the triggered price to MongoDB
@@ -440,6 +451,11 @@ function App() {
                       {triggeredStocks[stock.name] && (
                         <div className="alert-message">
                           <p>You have set alert at {inputValues[stock.name].value} {inputValues[stock.name].currency}</p>
+                          {showAlertPopup && (
+                            <div className="phone-alert-popup">
+                              <p>Get alert on Phone by clicking on Get Alert on Phone Number</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </li>
