@@ -26,6 +26,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 const userSchema = new mongoose.Schema({
   name: String,
   email: String,
+  phoneNumber: String, // Add phoneNumber field
   loginTime: String,
   logoutTime: String,
   stocks: [
@@ -93,17 +94,21 @@ app.get('/api/users/:email', async (req, res) => {
 });
 
 app.post('/api/users/update', async (req, res) => {
-  const { email, stocks } = req.body;
+  const { email, stocks, phoneNumber } = req.body;
   try {
+    const updateData = { stocks };
+    if (phoneNumber) {
+      updateData.phoneNumber = phoneNumber;
+    }
     const user = await User.findOneAndUpdate(
       { email },
-      { stocks },
+      updateData,
       { new: true }
     );
-    console.log('User stocks updated:', user);
+    console.log('User updated:', user);
     res.status(200).send(user);
   } catch (err) {
-    console.error('Error updating user stocks', err);
+    console.error('Error updating user', err);
     res.status(500).send('Internal Server Error');
   }
 });

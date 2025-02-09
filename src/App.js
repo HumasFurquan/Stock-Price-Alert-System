@@ -36,6 +36,9 @@ function App() {
   const [alertPopupMessage, setAlertPopupMessage] = useState("");
   const [triggeredStocks, setTriggeredStocks] = useState({});
   const [guestUser, setGuestUser] = useState(false);
+  const [showPhoneNumberInput, setShowPhoneNumberInput] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumberSaved, setPhoneNumberSaved] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -317,6 +320,41 @@ function App() {
     document.documentElement.classList.toggle('dark-mode');
   };
 
+  const handlePhoneNumberButtonClick = () => {
+    if (showPhoneNumberInput) {
+      if (phoneNumber.length === 10 && !isNaN(phoneNumber)) {
+        // Store the phone number in MongoDB
+        fetch('http://localhost:5000/api/users/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: user.email, phoneNumber }),
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Phone number saved:', data);
+          setShowPhoneNumberInput(false);
+          setPhoneNumberSaved(true);
+        })
+        .catch(error => console.error('Error:', error));
+      } else {
+        setAlertPopupMessage('Please enter a valid 10-digit phone number.');
+        setShowAlertPopup(true);
+        setTimeout(() => {
+          setShowAlertPopup(false);
+        }, 4000); // Clear message after 4 seconds
+      }
+    } else {
+      setShowPhoneNumberInput(true);
+    }
+  };
+
+  const handleEditPhoneNumberClick = () => {
+    setShowPhoneNumberInput(true);
+    setPhoneNumberSaved(false);
+  };
+
   if (isLoading) {
     return <div className="loading">Loading...</div>;
   }
@@ -326,6 +364,24 @@ function App() {
       <button onClick={toggleDarkMode} style={{ position: 'absolute', top: '10px', right: '10px' }}>
         {darkMode ? 'Light Mode' : 'Dark Mode'}
       </button>
+      {isAuthenticated || guestUser ? (
+        <>
+          {showPhoneNumberInput && (
+            <div style={{ position: 'absolute', bottom: '60px', right: '10px' }}>
+              <input
+                type="text"
+                placeholder="Enter phone number"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                style={{ textAlign: 'center' }}
+              />
+            </div>
+          )}
+          <button onClick={showPhoneNumberInput ? handlePhoneNumberButtonClick : handleEditPhoneNumberClick} style={{ position: 'absolute', bottom: '10px', right: '10px' }}>
+            {showPhoneNumberInput ? 'Proceed' : (phoneNumberSaved ? 'Edit Phone Number' : 'Get Alert on Phone Number')}
+          </button>
+        </>
+      ) : null}
       <h1>Welcome to Stock Price Trigger Alert</h1>
       <Routes>
         <Route path="/guest" element={<GuestPage />} />
