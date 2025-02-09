@@ -68,6 +68,10 @@ function App() {
             setInputValues(inputValues);
             setTriggeredStocks(triggeredStocks);
           }
+          if (data && data.phoneNumber) {
+            setPhoneNumber(data.phoneNumber);
+            setPhoneNumberSaved(true);
+          }
         })
         .catch(error => console.error('Error fetching user data:', error));
     }

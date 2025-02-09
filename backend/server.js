@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const moment = require('moment');
 const sgMail = require('@sendgrid/mail');
+const twilio = require('twilio');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -14,6 +15,9 @@ app.use(bodyParser.json());
 
 // Set SendGrid API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+// Set Twilio credentials
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 // Connect to MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI, {
@@ -128,6 +132,41 @@ app.post('/api/send-email', async (req, res) => {
     res.status(200).send('Email sent');
   } catch (error) {
     console.error('Error sending email:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.post('/api/send-notification', async (req, res) => {
+  const { email, subject, text } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    // Send email
+    const msg = {
+      to: email,
+      from: 'humasfurquan2025@gmail.com', // Use your verified sender email
+      subject,
+      text,
+    };
+    await sgMail.send(msg);
+    console.log('Email sent');
+
+    // Send SMS if phoneNumber is present
+    if (user.phoneNumber) {
+      const message = await twilioClient.messages.create({
+        body: text,
+        from: process.env.TWILIO_PHONE_NUMBER, // Your Twilio phone number
+        to: user.phoneNumber, // Recipient's phone number
+      });
+      console.log('SMS sent:', message.sid);
+    }
+
+    res.status(200).send('Notification sent');
+  } catch (error) {
+    console.error('Error sending notification:', error);
     res.status(500).send('Internal Server Error');
   }
 });
