@@ -31,8 +31,8 @@ const userSchema = new mongoose.Schema({
   name: String,
   email: String,
   phoneNumber: String, // Add phoneNumber field
-  loginTime: String,
-  logoutTime: String,
+  loginTimes: [String], // Change loginTime to an array of strings
+  logoutTimes: [String], // Change logoutTime to an array of strings
   stocks: [
     {
       name: String,
@@ -52,7 +52,11 @@ app.post('/api/users/login', async (req, res) => {
   try {
     const user = await User.findOneAndUpdate(
       { email },
-      { name, loginTime, stocks },
+      { 
+        name, 
+        $push: { loginTimes: loginTime }, // Append new login time to the array
+        stocks 
+      },
       { new: true, upsert: true }
     );
     console.log('User saved:', user);
@@ -71,7 +75,7 @@ app.post('/api/users/logout', async (req, res) => {
   try {
     const user = await User.findOneAndUpdate(
       { email },
-      { logoutTime },
+      { $push: { logoutTimes: logoutTime } }, // Append new logout time to the array
       { new: true }
     );
     console.log('User updated:', user);

@@ -90,13 +90,13 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: user.name, email: user.email, stocks }),
+        body: JSON.stringify({ name: user.name, email: user.email, stocks, loginTime: new Date().toISOString() }),
       })
       .then(response => response.json())
       .then(data => console.log('User login saved:', data))
       .catch(error => console.error('Error:', error));
     }
-  }, [isAuthenticated, user, stockPrices, inputValues]);
+  }, [isAuthenticated, user]);
 
   const handleLogout = () => {
     if (user) {
@@ -105,7 +105,7 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: user.email }),
+        body: JSON.stringify({ email: user.email, logoutTime: new Date().toISOString() }),
       })
       .then(response => response.json())
       .then(data => console.log('User logout saved:', data))
@@ -232,13 +232,6 @@ function App() {
       setShowAlertPopup(true);
       setTimeout(() => {
         setShowAlertPopup(false);
-        setTimeout(() => {
-          setAlertPopupMessage('Get alert on Phone by clicking on Get Alert on Phone Number');
-          setShowAlertPopup(true);
-          setTimeout(() => {
-            setShowAlertPopup(false);
-          }, 4000); // Clear message after 4 seconds
-        }, 2000); // Show second popup after 2 seconds
       }, 4000); // Clear message after 4 seconds
   
       // Mark the stock as triggered and hide the input and trigger button
@@ -455,11 +448,6 @@ function App() {
                       {triggeredStocks[stock.name] && (
                         <div className="alert-message">
                           <p>You have set alert at {inputValues[stock.name].value} {inputValues[stock.name].currency}</p>
-                          {showAlertPopup && (
-                            <div className="phone-alert-popup">
-                              <p>Get alert on Phone by clicking on Get Alert on Phone Number</p>
-                            </div>
-                          )}
                         </div>
                       )}
                     </li>
