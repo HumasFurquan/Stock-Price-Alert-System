@@ -96,7 +96,7 @@ function App() {
       .then(data => console.log('User login saved:', data))
       .catch(error => console.error('Error:', error));
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, stockPrices, inputValues]);
 
   const handleLogout = () => {
     if (user) {
