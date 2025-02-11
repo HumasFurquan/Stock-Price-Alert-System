@@ -50,8 +50,9 @@ function App() {
               const response = await fetch(`https://api.twelvedata.com/price?symbol=${stock.name}&apikey=996517017fc341dc84037d571b92f61f`);
               const stockData = await response.json();
               return {
-                ...stock,
-                price: stockData.price
+                name: stock.name,
+                currentPrice: stockData.price,
+                triggeredPrice: stock.triggeredPrice || 0
               };
             }));
             setStockPrices(updatedStocks);
