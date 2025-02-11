@@ -414,7 +414,7 @@ function App() {
                 <ul className="stock-price-list" reversed>
                   {stockPrices.map((stock, index) => (
                     <li key={index} className="stock-item">
-                      {index + 1}. Current price of {stock.name}: ${stock.price} USD / ₹{(stock.price * USD_TO_INR_CONVERSION_RATE).toFixed(2)} INR
+                      {index + 1}. Current price of {stock.name}: ${stock.currentPrice} USD / ₹{(stock.currentPrice * USD_TO_INR_CONVERSION_RATE).toFixed(2)} INR
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                           <button onClick={() => handleCurrencyChange(stock, 'USD')} style={{ marginLeft: '10px' }}>Dollar</button>
