@@ -158,6 +158,24 @@ app.post('/api/users/update', async (req, res) => {
   }
 });
 
+app.post('/api/users/delete-stock', async (req, res) => {
+  const { email, stockName } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    user.stocks = user.stocks.filter(stock => stock.name !== stockName);
+    await user.save();
+    console.log('Stock deleted:', stockName);
+    res.status(200).send(user);
+  } catch (err) {
+    console.error('Error deleting stock', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 app.post('/api/send-email', async (req, res) => {
   const { to, subject, text } = req.body;
   const msg = {
