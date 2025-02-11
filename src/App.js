@@ -79,24 +79,18 @@ function App() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const stocks = stockPrices.map(stock => ({
-        name: stock.name,
-        currentPrice: stock.price,
-        triggeredPrice: inputValues[stock.name]?.value || 0,
-      }));
-
       fetch('http://localhost:5000/api/users/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: user.name, email: user.email, stocks, loginTime: new Date().toISOString() }),
+        body: JSON.stringify({ name: user.name, email: user.email, loginTime: new Date().toISOString() }),
       })
       .then(response => response.json())
       .then(data => console.log('User login saved:', data))
       .catch(error => console.error('Error:', error));
     }
-  }, [isAuthenticated, user, stockPrices, inputValues]);
+  }, [isAuthenticated, user]);
 
   const handleLogout = () => {
     if (user) {
@@ -211,7 +205,7 @@ function App() {
     }
   };
 
-  const handleTrigger = (stock) => {
+  const handleTrigger = async (stock) => {
     if (guestUser) {
       setAlertPopupMessage('Email required');
       setShowAlertPopup(true);
@@ -244,9 +238,14 @@ function App() {
         [stock.name]: { ...prevValues[stock.name], showInput: false }
       }));
   
+      // Fetch the current price of the stock
+      const response = await fetch(`https://api.twelvedata.com/price?symbol=${stock.name}&apikey=996517017fc341dc84037d571b92f61f`);
+      const stockData = await response.json();
+      const currentPrice = stockData.price;
+  
       // Save the triggered price to MongoDB
       const updatedStocks = stockPrices.map(s => 
-        s.name === stock.name ? { ...s, triggeredPrice: inputValue } : s
+        s.name === stock.name ? { ...s, currentPrice, triggeredPrice: inputValue } : s
       );
   
       fetch('http://localhost:5000/api/users/update', {
