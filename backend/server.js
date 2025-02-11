@@ -5,7 +5,6 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const moment = require('moment');
 const sgMail = require('@sendgrid/mail');
-const twilio = require('twilio');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -15,9 +14,6 @@ app.use(bodyParser.json());
 
 // Set SendGrid API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-// Set Twilio credentials
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 // Connect to MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI, {
@@ -44,23 +40,56 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+const getCurrentStockPrice = async (symbol) => {
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const response = await fetch(`https://api.twelvedata.com/price?symbol=${symbol}&apikey=${process.env.TWELVEDATA_API_KEY}`);
+    const stockData = await response.json();
+    return parseFloat(stockData.price);
+  } catch (error) {
+    console.error('Error fetching stock price:', error);
+    throw error;
+  }
+};
+
+const updateStocks = async (existingStocks, newStocks) => {
+  if (!newStocks) return existingStocks;
+
+  const updatedStocks = await Promise.all(newStocks.map(async (newStock) => {
+    const currentPrice = await getCurrentStockPrice(newStock.name);
+    const existingStock = existingStocks.find(stock => stock.name === newStock.name);
+    return {
+      name: newStock.name,
+      currentPrice: currentPrice,
+      triggeredPrice: newStock.triggeredPrice || (existingStock ? existingStock.triggeredPrice : 0)
+    };
+  }));
+
+  // Retain existing stocks that are not in the new stocks list
+  const retainedStocks = existingStocks.filter(stock => !newStocks.some(newStock => newStock.name === stock.name));
+
+  return [...retainedStocks, ...updatedStocks];
+};
+
 app.post('/api/users/login', async (req, res) => {
   const { name, email, stocks } = req.body;
   const loginTime = moment().format('DD-MM-YYYY hh:mm A');
   console.log(`Login request received: ${name}, ${email}, ${stocks}, ${loginTime}`);
   
   try {
-    const user = await User.findOneAndUpdate(
+    const user = await User.findOne({ email });
+    const existingStocks = user ? user.stocks : [];
+    const updatedStocks = await updateStocks(existingStocks, stocks);
+
+    const updateData = { name, stocks: updatedStocks, $push: { loginTimes: loginTime } }; // Always push loginTime
+
+    const updatedUser = await User.findOneAndUpdate(
       { email },
-      { 
-        name, 
-        $push: { loginTimes: loginTime }, // Append new login time to the array
-        stocks 
-      },
+      updateData,
       { new: true, upsert: true }
     );
-    console.log('User saved:', user);
-    res.status(201).send(user);
+    console.log('User saved:', updatedUser);
+    res.status(201).send(updatedUser);
   } catch (err) {
     console.error('Error saving user', err);
     res.status(500).send('Internal Server Error');
@@ -91,6 +120,9 @@ app.get('/api/users/:email', async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (user) {
+      // Ensure all stocks have the required fields
+      user.stocks = await updateStocks(user.stocks, user.stocks);
+      await user.save();
       res.status(200).send(user);
     } else {
       res.status(404).send('User not found');
@@ -104,17 +136,22 @@ app.get('/api/users/:email', async (req, res) => {
 app.post('/api/users/update', async (req, res) => {
   const { email, stocks, phoneNumber } = req.body;
   try {
-    const updateData = { stocks };
+    const user = await User.findOne({ email });
+    const existingStocks = user ? user.stocks : [];
+    const updatedStocks = await updateStocks(existingStocks, stocks);
+
+    const updateData = { stocks: updatedStocks };
     if (phoneNumber) {
       updateData.phoneNumber = phoneNumber;
     }
-    const user = await User.findOneAndUpdate(
+
+    const updatedUser = await User.findOneAndUpdate(
       { email },
       updateData,
       { new: true }
     );
-    console.log('User updated:', user);
-    res.status(200).send(user);
+    console.log('User updated:', updatedUser);
+    res.status(200).send(updatedUser);
   } catch (err) {
     console.error('Error updating user', err);
     res.status(500).send('Internal Server Error');
@@ -157,16 +194,6 @@ app.post('/api/send-notification', async (req, res) => {
     };
     await sgMail.send(msg);
     console.log('Email sent');
-
-    // Send SMS if phoneNumber is present
-    if (user.phoneNumber) {
-      const message = await twilioClient.messages.create({
-        body: text,
-        from: process.env.TWILIO_PHONE_NUMBER, // Your Twilio phone number
-        to: user.phoneNumber, // Recipient's phone number
-      });
-      console.log('SMS sent:', message.sid);
-    }
 
     res.status(200).send('Notification sent');
   } catch (error) {
