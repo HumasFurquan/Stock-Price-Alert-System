@@ -102,13 +102,24 @@ app.post('/api/users/logout', async (req, res) => {
   console.log(`Logout request received: ${email}, ${logoutTime}`);
   
   try {
-    const user = await User.findOneAndUpdate(
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    if (user.stocks.length === 0) {
+      await User.deleteOne({ email });
+      console.log('User deleted:', email);
+      return res.status(200).send('User deleted');
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
       { email },
       { $push: { logoutTimes: logoutTime } }, // Append new logout time to the array
       { new: true }
     );
-    console.log('User updated:', user);
-    res.status(200).send(user);
+    console.log('User updated:', updatedUser);
+    res.status(200).send(updatedUser);
   } catch (err) {
     console.error('Error updating user', err);
     res.status(500).send('Internal Server Error');
@@ -167,6 +178,13 @@ app.post('/api/users/delete-stock', async (req, res) => {
     }
 
     user.stocks = user.stocks.filter(stock => stock.name !== stockName);
+
+    if (user.stocks.length === 0) {
+      await User.deleteOne({ email });
+      console.log('User deleted:', email);
+      return res.status(200).send('User deleted');
+    }
+
     await user.save();
     console.log('Stock deleted:', stockName);
     res.status(200).send(user);
