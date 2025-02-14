@@ -45,9 +45,25 @@ const getCurrentStockPrice = async (symbol) => {
     const fetch = (await import('node-fetch')).default;
     const response = await fetch(`https://api.twelvedata.com/price?symbol=${symbol}&apikey=${process.env.TWELVEDATA_API_KEY}`);
     const stockData = await response.json();
-    return parseFloat(stockData.price);
+    if (stockData.price) {
+      return parseFloat(stockData.price);
+    } else {
+      throw new Error(`No price data available for symbol: ${symbol}`);
+    }
   } catch (error) {
     console.error('Error fetching stock price:', error);
+    throw error;
+  }
+};
+
+const getExchangeRate = async () => {
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
+    const exchangeData = await response.json();
+    return exchangeData.rates.INR;
+  } catch (error) {
+    console.error('Error fetching exchange rate:', error);
     throw error;
   }
 };
@@ -55,12 +71,15 @@ const getCurrentStockPrice = async (symbol) => {
 const updateStocks = async (existingStocks, newStocks) => {
   if (!newStocks) return existingStocks;
 
+  const exchangeRate = await getExchangeRate();
+
   const updatedStocks = await Promise.all(newStocks.map(async (newStock) => {
-    const currentPrice = await getCurrentStockPrice(newStock.name);
+    const currentPriceUSD = await getCurrentStockPrice(newStock.name);
+    const currentPriceINR = currentPriceUSD * exchangeRate;
     const existingStock = existingStocks.find(stock => stock.name === newStock.name);
     return {
       name: newStock.name,
-      currentPrice: currentPrice,
+      currentPrice: currentPriceINR,
       triggeredPrice: newStock.triggeredPrice || (existingStock ? existingStock.triggeredPrice : 0)
     };
   }));
@@ -221,7 +240,7 @@ app.post('/api/send-notification', async (req, res) => {
       return res.status(404).send('User not found');
     }
 
-    // Send emailx
+    // Send email
     const msg = {
       to: email,
       from: 'humasfurquan2025@gmail.com', // Use your verified sender email

@@ -12,7 +12,7 @@ const stockSuggestions = [
   { name: "AMZN" },
 ];
 
-const USD_TO_INR_CONVERSION_RATE = 75;
+const USD_TO_INR_CONVERSION_RATE = 86.84;
 
 function App() {
   const {
