@@ -72,15 +72,17 @@ const updateStocks = async (existingStocks, newStocks) => {
   if (!newStocks) return existingStocks;
 
   const exchangeRate = await getExchangeRate();
+  const fixedRate = 86.84; // Fixed conversion rate from USD to INR
 
   const updatedStocks = await Promise.all(newStocks.map(async (newStock) => {
     const currentPriceUSD = await getCurrentStockPrice(newStock.name);
     const currentPriceINR = currentPriceUSD * exchangeRate;
     const existingStock = existingStocks.find(stock => stock.name === newStock.name);
+    const triggeredPriceINR = newStock.triggeredPrice ? newStock.triggeredPrice * fixedRate : (existingStock ? existingStock.triggeredPrice : 0);
     return {
       name: newStock.name,
       currentPrice: currentPriceINR,
-      triggeredPrice: newStock.triggeredPrice || (existingStock ? existingStock.triggeredPrice : 0)
+      triggeredPrice: triggeredPriceINR
     };
   }));
 
