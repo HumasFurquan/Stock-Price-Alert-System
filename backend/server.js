@@ -221,7 +221,7 @@ app.post('/api/send-notification', async (req, res) => {
       return res.status(404).send('User not found');
     }
 
-    // Send email
+    // Send emailx
     const msg = {
       to: email,
       from: 'humasfurquan2025@gmail.com', // Use your verified sender email

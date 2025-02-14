@@ -144,7 +144,7 @@ function App() {
       if (data.price) {
         const newStockPrice = {
           name: stockName,
-          price: data.price,
+          currentPrice: data.price,
           timestamp: new Date().toISOString()
         };
         setStockPrices([newStockPrice, ...stockPrices]);
