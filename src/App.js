@@ -40,43 +40,44 @@ function App() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneNumberSaved, setPhoneNumberSaved] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      fetch(`http://localhost:5000/api/users/${user.email}`)
-        .then(response => response.json())
-        .then(async data => {
-          if (data && data.stocks) {
-            const updatedStocks = await Promise.all(data.stocks.map(async stock => {
-              const response = await fetch(`https://api.twelvedata.com/price?symbol=${stock.name}&apikey=996517017fc341dc84037d571b92f61f`);
-              const stockData = await response.json();
-              return {
-                name: stock.name,
-                currentPrice: stockData.price || stock.currentPrice,
-                triggeredPrice: stock.triggeredPrice || 0
-              };
-            }));
-            setStockPrices(updatedStocks);
-            const inputValues = {};
-            const triggeredStocks = {};
-            updatedStocks.forEach(stock => {
-              inputValues[stock.name] = {
-                value: stock.triggeredPrice,
-                currency: stock.currency || 'USD', // Assuming default currency is USD
-                showInput: false,
-              };
-              triggeredStocks[stock.name] = true;
-            });
-            setInputValues(inputValues);
-            setTriggeredStocks(triggeredStocks);
-          }
-          if (data && data.phoneNumber) {
-            setPhoneNumber(data.phoneNumber);
-            setPhoneNumberSaved(true);
-          }
-        })
-        .catch(error => console.error('Error fetching user data:', error));
-    }
-  }, [isAuthenticated, user]);
+  // Update the useEffect loading user data
+useEffect(() => {
+  if (isAuthenticated && user) {
+    fetch(`http://localhost:5000/api/users/${user.email}`)
+      .then(response => response.json())
+      .then(async data => {
+        if (data && data.stocks) {
+          const updatedStocks = await Promise.all(data.stocks.map(async stock => {
+            const response = await fetch(`https://api.twelvedata.com/price?symbol=${stock.name}&apikey=996517017fc341dc84037d571b92f61f`);
+            const stockData = await response.json();
+            return {
+              name: stock.name,
+              currentPrice: stockData.price || stock.currentPrice,
+              triggeredPrice: stock.triggeredPrice || 0,
+              currencyType: stock.currencyType // Ensure this matches backend
+            };
+          }));
+          
+          setStockPrices(updatedStocks);
+          
+          const inputValues = {};
+          const triggeredStocks = {};
+          updatedStocks.forEach(stock => {
+            inputValues[stock.name] = {
+              value: stock.triggeredPrice,
+              currency: stock.currencyType || 'USD', // Changed from 'currency' to 'currencyType'
+              showInput: false,
+            };
+            triggeredStocks[stock.name] = true;
+          });
+          
+          setInputValues(inputValues);
+          setTriggeredStocks(triggeredStocks);
+        }
+      })
+      .catch(error => console.error('Error fetching user data:', error));
+  }
+}, [isAuthenticated, user]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -250,7 +251,7 @@ function App() {
           ...s,
           currentPrice: currentPrice,
           triggeredPrice: inputValue,
-          currencyType: inputValues[stock.name].currency // Send currency type
+          currencyType: inputValues[stock.name].currency // Ensure this matches backend schema
         } : s
       );
   
@@ -259,7 +260,9 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: user.email, stocks: updatedStocks.map(stock => ({
+        body: JSON.stringify({ 
+          email: user.email,
+          stocks: updatedStocks.map(stock => ({
           name: stock.name,
           triggeredPrice: stock.triggeredPrice,
           currencyType: stock.currencyType // Include currency type

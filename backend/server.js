@@ -73,21 +73,17 @@ const updateStocks = async (existingStocks, newStocks) => {
   if (!newStocks) return existingStocks;
 
   const updatedStocks = await Promise.all(newStocks.map(async (newStock) => {
-    // Get current price in USD directly
     const currentPriceUSD = await getCurrentStockPrice(newStock.name);
-    
-    // Preserve existing data if available
     const existingStock = existingStocks.find(s => s.name === newStock.name) || {};
-    
+
     return {
       name: newStock.name,
-      currentPrice: currentPriceUSD, // Store in USD
+      currentPrice: currentPriceUSD,
       triggeredPrice: newStock.triggeredPrice || existingStock.triggeredPrice || 0,
-      currencyType: newStock.currencyType || existingStock.currencyType || 'USD' // Use from frontend
+      currencyType: newStock.currencyType || existingStock.currencyType || 'USD'
     };
   }));
 
-  // Retain existing stocks not in new list
   const retainedStocks = existingStocks.filter(stock => 
     !newStocks.some(newStock => newStock.name === stock.name)
   );
