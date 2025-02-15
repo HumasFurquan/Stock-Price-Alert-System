@@ -211,88 +211,69 @@ useEffect(() => {
     if (guestUser) {
       setAlertPopupMessage('Email required');
       setShowAlertPopup(true);
-      setTimeout(() => {
-        setShowAlertPopup(false);
-      }, 4000); // Clear message after 4 seconds
+      setTimeout(() => setShowAlertPopup(false), 4000);
       return;
     }
   
     const inputValue = inputValues[stock.name]?.value;
     const currency = inputValues[stock.name]?.currency;
   
-    if (inputValue && currency) {
-      const message = currency === 'USD'
-        ? `You will be alerted at ${inputValue} dollars.`
-        : `You will be alerted at ${inputValue} rupees.`;
-      setAlertPopupMessage(message);
+    if (!inputValue || !currency) {
+      setAlertPopupMessage('Please enter a valid amount');
       setShowAlertPopup(true);
-      setTimeout(() => {
-        setShowAlertPopup(false);
-      }, 4000); // Clear message after 4 seconds
+      setTimeout(() => setShowAlertPopup(false), 4000);
+      return;
+    }
   
-      // Mark the stock as triggered and hide the input and trigger button
-      setTriggeredStocks((prev) => ({
-        ...prev,
-        [stock.name]: true,
-      }));
-      setInputValues((prevValues) => ({
-        ...prevValues,
-        [stock.name]: { ...prevValues[stock.name], showInput: false }
-      }));
-  
-      // Fetch the current price of the stock
-      const response = await fetch(`https://api.twelvedata.com/price?symbol=${stock.name}&apikey=996517017fc341dc84037d571b92f61f`);
-      const stockData = await response.json();
-      const currentPrice = stockData.price;
-  
-      // Save the triggered price to MongoDB
-      const updatedStocks = stockPrices.map(s => 
-        s.name === stock.name ? {
-          ...s,
-          currentPrice: currentPrice,
-          triggeredPrice: inputValue,
-          currencyType: inputValues[stock.name].currency // Ensure this matches backend schema
-        } : s
+    try {
+      // Fetch current price
+      const priceResponse = await fetch(
+        `https://api.twelvedata.com/price?symbol=${stock.name}&apikey=996517017fc341dc84037d571b92f61f`
       );
+      const priceData = await priceResponse.json();
+      const currentPrice = parseFloat(priceData.price);
   
-      fetch('http://localhost:5000/api/users/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email: user.email,
-          stocks: updatedStocks.map(stock => ({
-          name: stock.name,
-          triggeredPrice: stock.triggeredPrice,
-          currencyType: stock.currencyType // Include currency type
-        })) }),
-      })
-      .then(response => response.json())
-      .then(data => console.log('Triggered price saved:', data))
-      .catch(error => console.error('Error:', error));
+      // Create updated stock data
+      const updatedStock = {
+        name: stock.name,
+        currentPrice: currentPrice,
+        triggeredPrice: parseFloat(inputValue),
+        currencyType: currency
+      };
   
-      // Send email using SendGrid
-      fetch('http://localhost:5000/api/send-email', {
+      // Update backend and send email
+      const updateResponse = await fetch('http://localhost:5000/api/users/update', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: user.email,
-          subject: 'Stock Price Alert',
-          text: `You will be alerted at ${inputValue} ${currency} for stock ${stock.name}.`
-        }),
-      })
-      .then(response => response.json())
-      .then(data => console.log('Email sent:', data))
-      .catch(error => console.error('Error sending email:', error));
-    } else {
-      setAlertPopupMessage('Please enter a valid amount.');
+          email: user.email,
+          stocks: [updatedStock] // Send only the updated stock
+        })
+      });
+  
+      if (!updateResponse.ok) throw new Error('Update failed');
+  
+      // Update local state
+      setStockPrices(prev => prev.map(s => 
+        s.name === stock.name ? updatedStock : s
+      ));
+      
+      setTriggeredStocks(prev => ({ ...prev, [stock.name]: true }));
+      setInputValues(prev => ({
+        ...prev,
+        [stock.name]: { ...prev[stock.name], showInput: false }
+      }));
+  
+      // Show success message
+      setAlertPopupMessage(`Alert set for ${stock.name} at ${inputValue} ${currency}`);
       setShowAlertPopup(true);
-      setTimeout(() => {
-        setShowAlertPopup(false);
-      }, 4000); // Clear message after 4 seconds
+      setTimeout(() => setShowAlertPopup(false), 4000);
+  
+    } catch (error) {
+      console.error('Trigger error:', error);
+      setAlertPopupMessage('Failed to set alert. Please try again.');
+      setShowAlertPopup(true);
+      setTimeout(() => setShowAlertPopup(false), 4000);
     }
   };
 

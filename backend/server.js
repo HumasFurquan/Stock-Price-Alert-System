@@ -171,17 +171,27 @@ app.post('/api/users/update', async (req, res) => {
     const existingStocks = user ? user.stocks : [];
     const updatedStocks = await updateStocks(existingStocks, stocks);
 
+    // Send email for each updated stock
+    await Promise.all(updatedStocks.map(async (stock) => {
+      if (stock.triggeredPrice) {
+        const msg = {
+          to: user.email,
+          from: 'humasfurquan2025@gmail.com',
+          subject: 'Stock Alert Updated',
+          text: `You set an alert for ${stock.name} at ${stock.triggeredPrice} ${stock.currencyType}`
+        };
+        await sgMail.send(msg);
+      }
+    }));
+
     const updateData = { stocks: updatedStocks };
-    if (phoneNumber) {
-      updateData.phoneNumber = phoneNumber;
-    }
+    if (phoneNumber) updateData.phoneNumber = phoneNumber;
 
     const updatedUser = await User.findOneAndUpdate(
       { email },
       updateData,
       { new: true }
     );
-    console.log('User updated:', updatedUser);
     res.status(200).send(updatedUser);
   } catch (err) {
     console.error('Error updating user', err);
@@ -210,25 +220,6 @@ app.post('/api/users/delete-stock', async (req, res) => {
     res.status(200).send(user);
   } catch (err) {
     console.error('Error deleting stock', err);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-app.post('/api/send-email', async (req, res) => {
-  const { to, subject, text } = req.body;
-  const msg = {
-    to,
-    from: 'humasfurquan2025@gmail.com', // Use your verified sender email
-    subject,
-    text,
-  };
-
-  try {
-    await sgMail.send(msg);
-    console.log('Email sent');
-    res.status(200).send('Email sent');
-  } catch (error) {
-    console.error('Error sending email:', error);
     res.status(500).send('Internal Server Error');
   }
 });
