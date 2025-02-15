@@ -57,55 +57,53 @@ const getCurrentStockPrice = async (symbol) => {
   }
 };
 
-const getExchangeRate = async () => {
-  try {
-    const fetch = (await import('node-fetch')).default;
-    const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
-    const exchangeData = await response.json();
-    return exchangeData.rates.INR;
-  } catch (error) {
-    console.error('Error fetching exchange rate:', error);
-    throw error;
-  }
-};
+// const getExchangeRate = async () => {
+//   try {
+//     const fetch = (await import('node-fetch')).default;
+//     const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
+//     const exchangeData = await response.json();
+//     return exchangeData.rates.INR;
+//   } catch (error) {
+//     console.error('Error fetching exchange rate:', error);
+//     throw error;
+//   }
+// };
 
-const updateStocks = async (existingStocks, newStocks, isUSD) => {
+const updateStocks = async (existingStocks, newStocks) => {
   if (!newStocks) return existingStocks;
 
-  const exchangeRate = await getExchangeRate();
-  const fixedRate = 86.84; // Fixed conversion rate from USD to INR
-
   const updatedStocks = await Promise.all(newStocks.map(async (newStock) => {
+    // Get current price in USD directly
     const currentPriceUSD = await getCurrentStockPrice(newStock.name);
-    const currentPriceINR = currentPriceUSD * exchangeRate;
-    const existingStock = existingStocks.find(stock => stock.name === newStock.name);
-    const triggeredPrice = isUSD
-      ? newStock.triggeredPrice * fixedRate
-      : newStock.triggeredPrice || (existingStock ? existingStock.triggeredPrice : 0);
-    const currencyType = isUSD ? 'USD' : 'INR'; // Determine currency type based on user selection
+    
+    // Preserve existing data if available
+    const existingStock = existingStocks.find(s => s.name === newStock.name) || {};
+    
     return {
       name: newStock.name,
-      currentPrice: currentPriceINR,
-      triggeredPrice: triggeredPrice,
-      currencyType: currencyType, // Add currencyType to the stock object
+      currentPrice: currentPriceUSD, // Store in USD
+      triggeredPrice: newStock.triggeredPrice || existingStock.triggeredPrice || 0,
+      currencyType: newStock.currencyType || existingStock.currencyType || 'USD' // Use from frontend
     };
   }));
 
-  // Retain existing stocks that are not in the new stocks list
-  const retainedStocks = existingStocks.filter(stock => !newStocks.some(newStock => newStock.name === stock.name));
+  // Retain existing stocks not in new list
+  const retainedStocks = existingStocks.filter(stock => 
+    !newStocks.some(newStock => newStock.name === stock.name)
+  );
 
   return [...retainedStocks, ...updatedStocks];
 };
 
 app.post('/api/users/login', async (req, res) => {
-  const { name, email, stocks, isUSD } = req.body;
+  const { name, email, stocks } = req.body;
   const loginTime = moment().format('DD-MM-YYYY hh:mm A');
   console.log(`Login request received: ${name}, ${email}, ${stocks}, ${loginTime}`);
   
   try {
     const user = await User.findOne({ email });
     const existingStocks = user ? user.stocks : [];
-    const updatedStocks = await updateStocks(existingStocks, stocks, isUSD);
+    const updatedStocks = await updateStocks(existingStocks, stocks);
 
     const updateData = { name, stocks: updatedStocks, $push: { loginTimes: loginTime } }; // Always push loginTime
 
@@ -171,11 +169,11 @@ app.get('/api/users/:email', async (req, res) => {
 });
 
 app.post('/api/users/update', async (req, res) => {
-  const { email, stocks, phoneNumber, isUSD } = req.body;
+  const { email, stocks, phoneNumber } = req.body;
   try {
     const user = await User.findOne({ email });
     const existingStocks = user ? user.stocks : [];
-    const updatedStocks = await updateStocks(existingStocks, stocks, isUSD);
+    const updatedStocks = await updateStocks(existingStocks, stocks);
 
     const updateData = { stocks: updatedStocks };
     if (phoneNumber) {

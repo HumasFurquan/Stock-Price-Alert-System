@@ -246,7 +246,12 @@ function App() {
   
       // Save the triggered price to MongoDB
       const updatedStocks = stockPrices.map(s => 
-        s.name === stock.name ? { ...s, currentPrice, triggeredPrice: inputValue, currency } : s
+        s.name === stock.name ? {
+          ...s,
+          currentPrice: currentPrice,
+          triggeredPrice: inputValue,
+          currencyType: inputValues[stock.name].currency // Send currency type
+        } : s
       );
   
       fetch('http://localhost:5000/api/users/update', {
@@ -254,7 +259,11 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: user.email, stocks: updatedStocks }),
+        body: JSON.stringify({ email: user.email, stocks: updatedStocks.map(stock => ({
+          name: stock.name,
+          triggeredPrice: stock.triggeredPrice,
+          currencyType: stock.currencyType // Include currency type
+        })) }),
       })
       .then(response => response.json())
       .then(data => console.log('Triggered price saved:', data))
