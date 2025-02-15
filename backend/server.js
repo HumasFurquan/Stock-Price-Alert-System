@@ -26,14 +26,15 @@ mongoose.connect(process.env.MONGODB_URI, {
 const userSchema = new mongoose.Schema({
   name: String,
   email: String,
-  phoneNumber: String, // Add phoneNumber field
-  loginTimes: [String], // Change loginTime to an array of strings
-  logoutTimes: [String], // Change logoutTime to an array of strings
+  phoneNumber: String,
+  loginTimes: [String],
+  logoutTimes: [String],
   stocks: [
     {
       name: String,
       currentPrice: Number,
       triggeredPrice: Number,
+      currencyType: String, // Add currencyType field
     },
   ],
 });
@@ -68,7 +69,7 @@ const getExchangeRate = async () => {
   }
 };
 
-const updateStocks = async (existingStocks, newStocks) => {
+const updateStocks = async (existingStocks, newStocks, isUSD) => {
   if (!newStocks) return existingStocks;
 
   const exchangeRate = await getExchangeRate();
@@ -78,11 +79,15 @@ const updateStocks = async (existingStocks, newStocks) => {
     const currentPriceUSD = await getCurrentStockPrice(newStock.name);
     const currentPriceINR = currentPriceUSD * exchangeRate;
     const existingStock = existingStocks.find(stock => stock.name === newStock.name);
-    const triggeredPriceINR = newStock.triggeredPrice ? newStock.triggeredPrice * fixedRate : (existingStock ? existingStock.triggeredPrice : 0);
+    const triggeredPrice = isUSD
+      ? newStock.triggeredPrice * fixedRate
+      : newStock.triggeredPrice || (existingStock ? existingStock.triggeredPrice : 0);
+    const currencyType = isUSD ? 'USD' : 'INR'; // Determine currency type based on user selection
     return {
       name: newStock.name,
       currentPrice: currentPriceINR,
-      triggeredPrice: triggeredPriceINR
+      triggeredPrice: triggeredPrice,
+      currencyType: currencyType, // Add currencyType to the stock object
     };
   }));
 
@@ -93,14 +98,14 @@ const updateStocks = async (existingStocks, newStocks) => {
 };
 
 app.post('/api/users/login', async (req, res) => {
-  const { name, email, stocks } = req.body;
+  const { name, email, stocks, isUSD } = req.body;
   const loginTime = moment().format('DD-MM-YYYY hh:mm A');
   console.log(`Login request received: ${name}, ${email}, ${stocks}, ${loginTime}`);
   
   try {
     const user = await User.findOne({ email });
     const existingStocks = user ? user.stocks : [];
-    const updatedStocks = await updateStocks(existingStocks, stocks);
+    const updatedStocks = await updateStocks(existingStocks, stocks, isUSD);
 
     const updateData = { name, stocks: updatedStocks, $push: { loginTimes: loginTime } }; // Always push loginTime
 
@@ -153,7 +158,7 @@ app.get('/api/users/:email', async (req, res) => {
     const user = await User.findOne({ email });
     if (user) {
       // Ensure all stocks have the required fields
-      user.stocks = await updateStocks(user.stocks, user.stocks);
+      user.stocks = await updateStocks(user.stocks, user.stocks, false);
       await user.save();
       res.status(200).send(user);
     } else {
@@ -166,11 +171,11 @@ app.get('/api/users/:email', async (req, res) => {
 });
 
 app.post('/api/users/update', async (req, res) => {
-  const { email, stocks, phoneNumber } = req.body;
+  const { email, stocks, phoneNumber, isUSD } = req.body;
   try {
     const user = await User.findOne({ email });
     const existingStocks = user ? user.stocks : [];
-    const updatedStocks = await updateStocks(existingStocks, stocks);
+    const updatedStocks = await updateStocks(existingStocks, stocks, isUSD);
 
     const updateData = { stocks: updatedStocks };
     if (phoneNumber) {

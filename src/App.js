@@ -61,7 +61,7 @@ function App() {
             updatedStocks.forEach(stock => {
               inputValues[stock.name] = {
                 value: stock.triggeredPrice,
-                currency: 'USD', // Assuming default currency is USD
+                currency: stock.currency || 'USD', // Assuming default currency is USD
                 showInput: false,
               };
               triggeredStocks[stock.name] = true;
@@ -246,7 +246,7 @@ function App() {
   
       // Save the triggered price to MongoDB
       const updatedStocks = stockPrices.map(s => 
-        s.name === stock.name ? { ...s, currentPrice, triggeredPrice: inputValue } : s
+        s.name === stock.name ? { ...s, currentPrice, triggeredPrice: inputValue, currency } : s
       );
   
       fetch('http://localhost:5000/api/users/update', {
