@@ -39,45 +39,46 @@ function App() {
   const [showPhoneNumberInput, setShowPhoneNumberInput] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneNumberSaved, setPhoneNumberSaved] = useState(false);
+  const API_KEY = process.env.REACT_APP_TWELVEDATA_API_KEY;
 
   // Update the useEffect loading user data
-useEffect(() => {
-  if (isAuthenticated && user) {
-    fetch(`http://localhost:5000/api/users/${user.email}`)
-      .then(response => response.json())
-      .then(async data => {
-        if (data && data.stocks) {
-          const updatedStocks = await Promise.all(data.stocks.map(async stock => {
-            const response = await fetch(`https://api.twelvedata.com/price?symbol=${stock.name}&apikey=996517017fc341dc84037d571b92f61f`);
-            const stockData = await response.json();
-            return {
-              name: stock.name,
-              currentPrice: stockData.price || stock.currentPrice,
-              triggeredPrice: stock.triggeredPrice || 0,
-              currencyType: stock.currencyType // Ensure this matches backend
-            };
-          }));
-          
-          setStockPrices(updatedStocks);
-          
-          const inputValues = {};
-          const triggeredStocks = {};
-          updatedStocks.forEach(stock => {
-            inputValues[stock.name] = {
-              value: stock.triggeredPrice,
-              currency: stock.currencyType || 'USD', // Changed from 'currency' to 'currencyType'
-              showInput: false,
-            };
-            triggeredStocks[stock.name] = true;
-          });
-          
-          setInputValues(inputValues);
-          setTriggeredStocks(triggeredStocks);
-        }
-      })
-      .catch(error => console.error('Error fetching user data:', error));
-  }
-}, [isAuthenticated, user]);
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetch(`http://localhost:5000/api/users/${user.email}`)
+        .then(response => response.json())
+        .then(async data => {
+          if (data && data.stocks) {
+            const updatedStocks = await Promise.all(data.stocks.map(async stock => {
+              const response = await fetch(`https://api.twelvedata.com/price?symbol=${stock.name}&apikey=${API_KEY}`);
+              const stockData = await response.json();
+              return {
+                name: stock.name,
+                currentPrice: stockData.price || stock.currentPrice,
+                triggeredPrice: stock.triggeredPrice || 0,
+                currencyType: stock.currencyType // Ensure this matches backend
+              };
+            }));
+            
+            setStockPrices(updatedStocks);
+            
+            const inputValues = {};
+            const triggeredStocks = {};
+            updatedStocks.forEach(stock => {
+              inputValues[stock.name] = {
+                value: stock.triggeredPrice,
+                currency: stock.currencyType || 'USD', // Changed from 'currency' to 'currencyType'
+                showInput: false,
+              };
+              triggeredStocks[stock.name] = true;
+            });
+            
+            setInputValues(inputValues);
+            setTriggeredStocks(triggeredStocks);
+          }
+        })
+        .catch(error => console.error('Error fetching user data:', error));
+    }
+  }, [isAuthenticated, user, API_KEY]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -124,7 +125,7 @@ useEffect(() => {
       setError("Stock name is required.");
       return;
     }
-
+  
     // Check if the stock is already present
     if (stockPrices.some(stock => stock.name === stockName)) {
       setDuplicateMessage(`${stockName} Stock already added`);
@@ -132,12 +133,12 @@ useEffect(() => {
       setTimeout(() => setShowDuplicateMessage(false), 2000); // Hide message after 2 seconds
       return;
     }
-
+  
     setLoading(true);
     setError(null);
-
+  
     try {
-      const response = await fetch(`https://api.twelvedata.com/price?symbol=${stockName}&apikey=996517017fc341dc84037d571b92f61f`);
+      const response = await fetch(`https://api.twelvedata.com/price?symbol=${stockName}&apikey=${API_KEY}`);
       if (!response.ok) {
         throw new Error('Failed to fetch stock price');
       }
@@ -228,7 +229,7 @@ useEffect(() => {
     try {
       // Fetch current price
       const priceResponse = await fetch(
-        `https://api.twelvedata.com/price?symbol=${stock.name}&apikey=996517017fc341dc84037d571b92f61f`
+        `https://api.twelvedata.com/price?symbol=${stock.name}&apikey=${API_KEY}`
       );
       const priceData = await priceResponse.json();
       const currentPrice = parseFloat(priceData.price);
